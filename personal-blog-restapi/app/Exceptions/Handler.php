@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
 
@@ -55,6 +56,14 @@ class Handler extends ExceptionHandler
                 'status' => "error",
                 'message' => 'Data not found'
             ], 404);
+        }
+
+        if($e instanceof UniqueConstraintViolationException)
+        {
+            return response()->json([
+                'status' => "error",
+                'message' => 'Duplicate Slug or Title'
+            ], 409);
         }
 
         return parent::render($request, $e);

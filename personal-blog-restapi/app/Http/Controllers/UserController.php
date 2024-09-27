@@ -40,7 +40,7 @@ class UserController extends Controller
             'prev_page_url' => $users->previousPageUrl(),
             'path' => $users->path(),
             'data' => $users->items(),
-        ]);
+        ], 200);
     }
 
     public function getAllUsers()
@@ -120,14 +120,14 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(User $user)
+    public function destroy($uuid)
     {
         $name = $user->username;
-        $user->delete();
+        $user = User::where('uuid', $uuid)->first();
 
         return response()->json([
            'status' => 'success',
            'data' => "User $name deleted successfully"
-        ]);
+        ], 200);
     }
 }

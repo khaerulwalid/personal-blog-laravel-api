@@ -18,8 +18,6 @@ use \Illuminate\Foundation\Auth\EmailVerificationRequest;
 */
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/posts', [PostController::class, 'index']);
-    Route::post('/posts', [PostController::class, 'store']);
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/all', [CategoryController::class, 'getAll']);
     Route::post('/categories', [CategoryController::class, 'store']);
@@ -31,6 +29,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users/{id}', [UserController::class, 'show']);
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    Route::get('/posts', [PostController::class, 'index']);
+    Route::post('/posts', [PostController::class, 'store']);
+    Route::get('/posts/all', [PostController::class, 'getAllPosts']);
+    Route::get('/posts/{id}', [PostController::class, 'show']);
+    Route::put('/posts/{post}', [PostController::class, 'update']);
+    Route::delete('/posts/{post}', [PostController::class, 'destroy']);
 });
 
 //Route::middleware(['auth:sanctum'])->post('/email/verification-notification', function (Request $request) {
