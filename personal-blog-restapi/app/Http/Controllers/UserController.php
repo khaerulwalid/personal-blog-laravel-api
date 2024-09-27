@@ -7,10 +7,43 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
+    private function validateUser(Request $request, User $user = null)
+    {
+        $rules = [
+            'username' => 'required|unique:users,username' . ($user ? ",{$user->id}" : ''),
+            'email' => 'required|unique:users,email' . ($user ? ",{$user->id}" : ''),
+            'password' => $user ? 'nullable|min:8' : 'required|min:8',
+            'role' => 'required|in:admin,user',
+        ];
+
+        return $request->validate($rules);
+    }
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
+    {
+        $page = $request->get('page', 1);
+        $perPage = $request->get('perPage', 10);
+        $users = User::paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'current_page' => intval($page),
+            'last_page' => $users->lastPage(),
+            'per_page' => $users->perPage(),
+            'total' => $users->total(),
+            'from' => $users->firstItem(),
+            'to' => $users->lastItem(),
+            'first_page_url' => $users->url(1),
+            'last_page_url' => $users->url($users->lastPage()),
+            'next_page_url' => $users->nextPageUrl(),
+            'prev_page_url' => $users->previousPageUrl(),
+            'path' => $users->path(),
+            'data' => $users->items(),
+        ]);
+    }
+
+    public function getAllUsers()
     {
         return User::all();
     }
@@ -20,12 +53,8 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'username' => 'required|unique:users',
-            'email' => 'required|unique:users',
-            'password' => 'required|min:8',
-            'role' => 'required|in:admin,user',
-        ]);
+        $this->validateUser($request);
+
 
         $post = User::create([
             'username' => $request->username,
@@ -34,15 +63,34 @@ class UserController extends Controller
             'role' => $request->role
         ]);
 
-        return response()->json($post, 200);
+        // send email verification
+        // $post->sendEmailVerificationNotification();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $post
+        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show($id)
     {
-        //
+        $user = User::find($id);
+
+        if(!$user)
+        {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $user
+        ], 200);
     }
 
     /**
@@ -50,7 +98,23 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        //
+        $this->validateUser($request, $user);
+
+        $user->username = $request->input('username');
+        $user->email = $request->input('email');
+        $user->role = $request->input('role');
+
+        if($request->filled('password'))
+        {
+            $user->password = bcrypt($request->input('password'));
+        }
+
+        $user->save();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $user
+        ], 200);
     }
 
     /**
@@ -58,6 +122,12 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        //
+        $name = $user->username;
+        $user->delete();
+
+        return response()->json([
+           'status' => 'success',
+           'data' => "User $name deleted successfully"
+        ]);
     }
 }
